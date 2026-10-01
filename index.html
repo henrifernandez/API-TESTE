@@ -103,14 +103,14 @@
         .photo {
             pointer-events: auto;
             position: relative;
-            width: min(520px, 100%);
-            aspect-ratio: 4 / 3;
-            border-radius: 18px;
+            width: min(440px, 80vw);
+            aspect-ratio: 1 / 1;
+            border-radius: 50%;
             border: 1px solid rgba(255, 180, 84, .45);
-            background: #0a0f18 center / cover no-repeat;
+            background: #0a0f18 42% 58% / 118% no-repeat; /* recorta o fundo cinza e enquadra no círculo */
             box-shadow: 0 0 0 1px rgba(0,0,0,.4), 0 40px 90px rgba(0,0,0,.6), 0 0 80px rgba(255, 180, 84, .18);
             opacity: 0;
-            clip-path: inset(50% 50% 50% 50% round 18px);
+            clip-path: inset(50% 50% 50% 50% round 50%);
             transform: translateY(40px) rotateX(18deg) scale(.9);
             overflow: hidden;
         }
@@ -128,16 +128,16 @@
         }
         .photo.missing .fallback { display: grid; }
         .photo .close {
-            position: absolute; top: 12px; right: 12px; z-index: 2;
+            position: absolute; bottom: 7%; left: 50%; margin-left: -34px; z-index: 2;
             padding: 6px 10px; font-size: 12px; background: rgba(5,7,13,.7); transform: none !important;
         }
         @keyframes reveal {
-            0%   { opacity: 0; clip-path: inset(50% 50% 50% 50% round 18px); transform: translateY(40px) rotateX(18deg) scale(.9); }
-            40%  { opacity: 1; clip-path: inset(46% 0 46% 0 round 18px); }
-            100% { opacity: 1; clip-path: inset(0 0 0 0 round 18px); transform: translateY(0) rotateX(0) scale(1); }
+            0%   { opacity: 0; clip-path: inset(50% 50% 50% 50% round 50%); transform: translateY(40px) rotateX(18deg) scale(.9); }
+            40%  { opacity: 1; clip-path: inset(46% 0 46% 0 round 50%); }
+            100% { opacity: 1; clip-path: inset(0 0 0 0 round 50%); transform: translateY(0) rotateX(0) scale(1); }
         }
         @keyframes conceal {
-            to { opacity: 0; clip-path: inset(50% 50% 50% 50% round 18px); transform: translateY(20px) scale(.92); }
+            to { opacity: 0; clip-path: inset(50% 50% 50% 50% round 50%); transform: translateY(20px) scale(.92); }
         }
         @keyframes sweep { to { transform: translateX(120%); } }
 
@@ -165,7 +165,7 @@
                 <button data-file="mensagem2.txt"><span class="label">Buscar mensagem 2</span><span class="path">mensagem2.txt</span></button>
                 <button data-file="mensagem3.txt"><span class="label">Buscar mensagem 3</span><span class="path">mensagem3.txt</span></button>
                 <div class="sep"></div>
-                <button class="image-btn" id="btnImagem"><span class="label">Mostrar imagem</span><span class="path">imagem.png</span></button>
+                <button class="image-btn" id="btnImagem"><span class="label">Mostrar imagem</span><span class="path">imagem.jpg</span></button>
             </div>
 
             <div class="terminal" aria-live="polite">
@@ -177,7 +177,7 @@
         <section class="stage">
             <div class="photo" id="foto" role="img" aria-label="Imagem carregada">
                 <button class="close" id="fechar">Fechar</button>
-                <div class="fallback">Coloque o arquivo<br><strong>imagem.png</strong><br>na mesma pasta do index.html</div>
+                <div class="fallback">Coloque o arquivo<br><strong>imagem.jpg</strong><br>na mesma pasta do index.html</div>
             </div>
         </section>
     </main>
@@ -185,9 +185,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         /* ====== Configuração ====== */
-        const ARQUIVO_IMAGEM = 'imagem.png'; // troque aqui se usar outro nome/extensão
+        const ARQUIVO_IMAGEM = 'imagem.jpg'; // troque aqui se usar outro nome/extensão
 
-        /* ====== Cena Three.js ====== */
+        /* ====== Cena Three.js (a interface funciona mesmo se a CDN falhar) ====== */
+        let animarRequisicao = cb => setTimeout(cb, 700), explosaoImagem = () => {};
+        if (window.THREE) {
         const canvas = document.getElementById('scene');
         const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
         renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -272,7 +274,7 @@
         }
 
         // Ciclo completo: cliente -> servidor -> cliente
-        function animarRequisicao(aoResponder) {
+        animarRequisicao = function (aoResponder) {
             enviarPacote(AMBER, 1, () => {
                 pulse = 1;
                 onda(core.position, ACCENT);
@@ -280,7 +282,7 @@
             });
         }
 
-        function explosaoImagem() {
+        explosaoImagem = function () {
             imageBurst = 1;
             onda(new THREE.Vector3(0, 0, 0), AMBER);
             setTimeout(() => onda(new THREE.Vector3(0, 0, 0), ACCENT), 160);
@@ -359,6 +361,7 @@
         addEventListener('resize', ajustar);
         ajustar();
         loop();
+        }
 
         /* ====== Interface ====== */
         const $ = id => document.getElementById(id);
