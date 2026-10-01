@@ -483,23 +483,72 @@
         const foto = $('foto'), frame = $('frame'), stageEl = frame.parentElement, btnImagem = $('btnImagem');
         let aberta = false;
 
+        let carregando = false;
+
         function abrirImagem() {
-            if (aberta) return;
-            aberta = true;
-            foto.classList.remove('hide', 'missing');
-            foto.style.backgroundImage = 'url("' + ARQUIVO_IMAGEM + '")';
-            const teste = new Image();
-            teste.onerror = () => { foto.classList.add('missing'); foto.style.backgroundImage = 'none'; };
-            teste.src = ARQUIVO_IMAGEM;
-            void foto.offsetWidth; // reinicia a animação
-            frame.classList.remove('off'); frame.classList.add('on');
-            foto.classList.add('show');
-            explosaoImagem();
-            btnImagem.querySelector('.label').textContent = 'Ocultar imagem';
+            if (aberta || carregando) return;
+            carregando = true;
+            btnImagem.disabled = true;
+            alvo.textContent = 'GET ' + ARQUIVO_IMAGEM;
+            codigo.textContent = 'enviando…'; codigo.className = 'status';
+            resultado.textContent = '';
+            setEstado('IMAGEM EM TRÂNSITO', true);
+
+            // baixa a imagem enquanto o pacote viaja
+            const t0 = performance.now();
+            const carga = new Promise(ok => {
+                const img = new Image();
+                img.onload = () => ok(true);
+                img.onerror = () => ok(false);
+                img.src = ARQUIVO_IMAGEM;
+            });
+
+            animarRequisicao(() => carga.then(achou => {
+                carregando = false; aberta = true;
+                btnImagem.disabled = false;
+                foto.classList.remove('hide', 'missing');
+                foto.style.backgroundImage = achou ? 'url("' + ARQUIVO_IMAGEM + '")' : 'none';
+                if (!achou) foto.classList.add('missing');
+                codigo.textContent = achou ? '200 OK · ' + Math.round(performance.now() - t0) + ' ms' : 'falhou';
+                codigo.className = 'status ' + (achou ? 'ok' : 'err');
+                void foto.offsetWidth; // reinicia a animação
+                frame.classList.remove('off'); frame.classList.add('on');
+                foto.classList.add('show');
+                explosaoImagem();
+                setEstado('PRONTO PARA REQUISITAR', false);
+                btnImagem.querySelector('.label').textContent = 'Ocultar imagem';
+            }));
         }
+
+        // chuva de corações que sai da moldura quando a imagem é ocultada
+        const CORACAO = '<svg viewBox="0 0 24 24" width="100%" height="100%"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.3 2.6 4.5 6.3 4.5c2 0 3.7 1.1 4.7 2.8l1 1.6 1-1.6c1-1.7 2.7-2.8 4.7-2.8 3.7 0 5.4 3.8 3.9 7.2C19.5 16.4 12 21 12 21z" fill="currentColor"/></svg>';
+        function chuvaDeCoracoes() {
+            if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            const r = frame.getBoundingClientRect();
+            const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+            const cores = ['#ff4fa3', '#ff5d73', '#ff2e63', '#ff8fb8', '#ffb454'];
+            for (let i = 0; i < 40; i++) {
+                const h = document.createElement('span');
+                const tam = 16 + Math.random() * 30;
+                h.innerHTML = CORACAO;
+                h.style.cssText = `position:fixed;z-index:5;pointer-events:none;left:${cx - tam / 2}px;top:${cy - tam / 2}px;width:${tam}px;height:${tam}px;color:${cores[i % cores.length]};filter:drop-shadow(0 0 8px currentColor)`;
+                document.body.appendChild(h);
+                const ang = Math.random() * Math.PI * 2, dist = r.width * (.3 + Math.random() * .6);
+                const dx = Math.cos(ang) * dist, dy = Math.sin(ang) * dist - 140 - Math.random() * 180;
+                const giro = (Math.random() - .5) * 80;
+                const anim = h.animate([
+                    { transform: 'translate(0,0) scale(.2) rotate(0deg)', opacity: 0 },
+                    { transform: `translate(${dx * .4}px,${dy * .4}px) scale(1.1) rotate(${giro * .4}deg)`, opacity: 1, offset: .25 },
+                    { transform: `translate(${dx}px,${dy}px) scale(.7) rotate(${giro}deg)`, opacity: 0 }
+                ], { duration: 1500 + Math.random() * 1300, delay: Math.random() * 350, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'forwards' });
+                anim.onfinish = () => h.remove();
+            }
+        }
+
         function fecharImagem() {
             if (!aberta) return;
             aberta = false;
+            chuvaDeCoracoes();
             foto.classList.remove('show');
             foto.classList.add('hide');
             frame.classList.add('off');
