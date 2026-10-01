@@ -76,6 +76,15 @@
         button .path { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); }
         button.image-btn { border-color: rgba(255, 180, 84, .35); }
         button.image-btn:hover { border-color: var(--accent-2); background: rgba(255, 180, 84, .08); }
+        button.music-btn { border-color: rgba(255, 79, 163, .35); }
+        button.music-btn:hover { border-color: #ff4fa3; background: rgba(255, 79, 163, .08); }
+        .eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; margin-right: 10px; }
+        .eq i { width: 3px; height: 4px; background: #ff4fa3; border-radius: 2px; }
+        .music-btn.tocando .eq i { animation: eq .9s ease-in-out infinite; }
+        .music-btn.tocando .eq i:nth-child(2) { animation-delay: -.3s; }
+        .music-btn.tocando .eq i:nth-child(3) { animation-delay: -.6s; }
+        .music-btn.tocando .eq i:nth-child(4) { animation-delay: -.15s; }
+        @keyframes eq { 50% { height: 14px; } }
         .sep { height: 1px; background: var(--line); margin: 6px 0; }
 
         .terminal {
@@ -100,17 +109,45 @@
             display: grid; place-items: center;
             transition: transform .15s ease-out;
         }
+        .frame {
+            position: relative;
+            width: min(620px, 90vw, 78vh);
+            aspect-ratio: 1 / 1;
+            display: grid; place-items: center;
+            visibility: hidden;
+        }
+        .frame.on { visibility: visible; }
+                .aura, .ring, .orbit { position: absolute; border-radius: 50%; pointer-events: none; opacity: 0; }
+        .aura { inset: -14%; background: radial-gradient(circle, rgba(255,180,84,.55), rgba(61,240,210,.28) 45%, transparent 70%); filter: blur(30px); }
+        .ring { inset: -2.2%; background: conic-gradient(from 0deg, #3df0d2, #ffb454, #ff4fa3, #7a5cff, #3df0d2);
+                -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 6px));
+                        mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 6px)); }
+        .ring.glow { filter: blur(14px);
+                -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 22px), #000 calc(100% - 4px)); mask: radial-gradient(farthest-side, transparent calc(100% - 22px), #000 calc(100% - 4px)); }
+        .orbit { inset: -9%; }
+        .orbit i { position: absolute; top: -5px; left: calc(50% - 5px); width: 10px; height: 10px; border-radius: 50%;
+                   background: var(--c); box-shadow: 0 0 14px 4px var(--c); }
+        .frame.on .aura { opacity: 1; animation: breathe 2.6s ease-in-out infinite; }
+        .frame.on .ring { opacity: 1; animation: spin 5s linear infinite; }
+        .frame.on .orbit { opacity: 1; animation: spin var(--t) linear infinite; }
+        .frame.on .orbit.rev { animation-direction: reverse; }
+        .frame.off .aura, .frame.off .ring, .frame.off .orbit { opacity: 0; transition: opacity .35s; animation: none; }
+        .frame.on { animation: float 5s ease-in-out infinite; }
+        .frame.off { animation: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes breathe { 50% { transform: scale(1.08); opacity: .75; } }
+        @keyframes float { 50% { translate: 0 -10px; } }
         .photo {
             pointer-events: auto;
             position: relative;
-            width: min(520px, 100%);
-            aspect-ratio: 4 / 3;
-            border-radius: 18px;
-            border: 1px solid rgba(255, 180, 84, .45);
-            background: #0a0f18 center / cover no-repeat;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border-radius: 50%;
+            border: 0;
+            background: #0a0f18 42% 58% / 118% no-repeat; /* recorta o fundo cinza e enquadra no círculo */
             box-shadow: 0 0 0 1px rgba(0,0,0,.4), 0 40px 90px rgba(0,0,0,.6), 0 0 80px rgba(255, 180, 84, .18);
             opacity: 0;
-            clip-path: inset(50% 50% 50% 50% round 18px);
+            clip-path: inset(50% 50% 50% 50% round 50%);
             transform: translateY(40px) rotateX(18deg) scale(.9);
             overflow: hidden;
         }
@@ -128,16 +165,17 @@
         }
         .photo.missing .fallback { display: grid; }
         .photo .close {
-            position: absolute; top: 12px; right: 12px; z-index: 2;
+            position: absolute; bottom: 7%; left: 50%; margin-left: -34px; z-index: 2;
             padding: 6px 10px; font-size: 12px; background: rgba(5,7,13,.7); transform: none !important;
         }
         @keyframes reveal {
-            0%   { opacity: 0; clip-path: inset(50% 50% 50% 50% round 18px); transform: translateY(40px) rotateX(18deg) scale(.9); }
-            40%  { opacity: 1; clip-path: inset(46% 0 46% 0 round 18px); }
-            100% { opacity: 1; clip-path: inset(0 0 0 0 round 18px); transform: translateY(0) rotateX(0) scale(1); }
+            0%   { opacity: 0; clip-path: inset(50% 50% 50% 50% round 50%); transform: translateY(40px) rotateX(18deg) scale(.9); filter: brightness(3) saturate(0); }
+            35%  { opacity: 1; clip-path: inset(46% 0 46% 0 round 50%); filter: brightness(2) hue-rotate(90deg) saturate(2); }
+            60%  { filter: brightness(1.4) hue-rotate(-40deg) saturate(1.6); transform: translateY(0) rotateX(0) scale(1.06) skewX(-3deg); }
+            100% { opacity: 1; clip-path: inset(0 0 0 0 round 50%); transform: translateY(0) rotateX(0) scale(1); filter: none; }
         }
         @keyframes conceal {
-            to { opacity: 0; clip-path: inset(50% 50% 50% 50% round 18px); transform: translateY(20px) scale(.92); }
+            to { opacity: 0; clip-path: inset(50% 50% 50% 50% round 50%); transform: translateY(20px) scale(.92); }
         }
         @keyframes sweep { to { transform: translateX(120%); } }
 
@@ -165,7 +203,8 @@
                 <button data-file="mensagem2.txt"><span class="label">Buscar mensagem 2</span><span class="path">mensagem2.txt</span></button>
                 <button data-file="mensagem3.txt"><span class="label">Buscar mensagem 3</span><span class="path">mensagem3.txt</span></button>
                 <div class="sep"></div>
-                <button class="image-btn" id="btnImagem"><span class="label">Mostrar imagem</span><span class="path">imagem.png</span></button>
+                <button class="music-btn" id="btnMusica"><span class="label"><span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span id="rotuloMusica">Tocar música</span></span><span class="path">musica.mp3</span></button>
+                <button class="image-btn" id="btnImagem"><span class="label">Mostrar imagem</span><span class="path">imagem.jpg</span></button>
             </div>
 
             <div class="terminal" aria-live="polite">
@@ -175,9 +214,17 @@
         </section>
 
         <section class="stage">
-            <div class="photo" id="foto" role="img" aria-label="Imagem carregada">
-                <button class="close" id="fechar">Fechar</button>
-                <div class="fallback">Coloque o arquivo<br><strong>imagem.png</strong><br>na mesma pasta do index.html</div>
+            <div class="frame" id="frame">
+                <div class="aura"></div>
+                <div class="ring glow"></div>
+                <div class="ring"></div>
+                <div class="orbit" style="--t:7s"><i style="--c:#3df0d2"></i></div>
+                <div class="orbit rev" style="--t:11s;inset:-16%"><i style="--c:#ffb454"></i></div>
+                <div class="orbit" style="--t:15s;inset:-23%"><i style="--c:#ff4fa3"></i></div>
+                <div class="photo" id="foto" role="img" aria-label="Imagem carregada">
+                    <button class="close" id="fechar">Fechar</button>
+                    <div class="fallback">Coloque o arquivo<br><strong>imagem.jpg</strong><br>na mesma pasta do index.html</div>
+                </div>
             </div>
         </section>
     </main>
@@ -185,9 +232,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         /* ====== Configuração ====== */
-        const ARQUIVO_IMAGEM = 'imagem.png'; // troque aqui se usar outro nome/extensão
+        const ARQUIVO_IMAGEM = 'imagem.jpg'; // troque aqui se usar outro nome/extensão
 
-        /* ====== Cena Three.js ====== */
+        /* ====== Cena Three.js (a interface funciona mesmo se a CDN falhar) ====== */
+        let animarRequisicao = cb => setTimeout(cb, 700), explosaoImagem = () => {};
+        if (window.THREE) {
         const canvas = document.getElementById('scene');
         const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
         renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -272,7 +321,7 @@
         }
 
         // Ciclo completo: cliente -> servidor -> cliente
-        function animarRequisicao(aoResponder) {
+        animarRequisicao = function (aoResponder) {
             enviarPacote(AMBER, 1, () => {
                 pulse = 1;
                 onda(core.position, ACCENT);
@@ -280,7 +329,23 @@
             });
         }
 
-        function explosaoImagem() {
+        const BURST = 260, bPos = new Float32Array(BURST * 3), bVel = [];
+        const bGeo = new THREE.BufferGeometry();
+        bGeo.setAttribute('position', new THREE.BufferAttribute(bPos, 3));
+        const bMat = new THREE.PointsMaterial({ color: 0xffd08a, size: .12, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+        const burst = new THREE.Points(bGeo, bMat);
+        scene.add(burst);
+        let burstT = 1;
+        function dispararParticulas() {
+            burstT = 0;
+            for (let i = 0; i < BURST; i++) {
+                const a = Math.random() * Math.PI * 2, b = Math.acos(2 * Math.random() - 1), v = 3 + Math.random() * 7;
+                bPos.set([0, 0, 0], i * 3);
+                bVel[i] = [Math.sin(b) * Math.cos(a) * v, Math.sin(b) * Math.sin(a) * v, Math.cos(b) * v];
+            }
+        }
+        explosaoImagem = function () {
+            dispararParticulas();
             imageBurst = 1;
             onda(new THREE.Vector3(0, 0, 0), AMBER);
             setTimeout(() => onda(new THREE.Vector3(0, 0, 0), ACCENT), 160);
@@ -327,6 +392,17 @@
                     p.aoChegar && p.aoChegar();
                 }
             }
+            // partículas da imagem
+            if (burstT < 1) {
+                burstT += dt / 1.8;
+                for (let i = 0; i < BURST; i++) {
+                    bPos[i*3] += bVel[i][0] * dt; bPos[i*3+1] += bVel[i][1] * dt; bPos[i*3+2] += bVel[i][2] * dt;
+                    bVel[i][0] *= .985; bVel[i][1] *= .985; bVel[i][2] *= .985;
+                }
+                bGeo.attributes.position.needsUpdate = true;
+                bMat.opacity = Math.max(0, 1 - burstT);
+                bMat.color.setHSL((time * .4) % 1, .9, .65);
+            }
             // ondas
             for (let i = waves.length - 1; i >= 0; i--) {
                 const o = waves[i];
@@ -359,6 +435,7 @@
         addEventListener('resize', ajustar);
         ajustar();
         loop();
+        }
 
         /* ====== Interface ====== */
         const $ = id => document.getElementById(id);
@@ -413,28 +490,111 @@
         botoes.forEach(b => b.addEventListener('click', () => buscar(b.dataset.file)));
 
         /* ====== Imagem ====== */
-        const foto = $('foto'), btnImagem = $('btnImagem');
+        const foto = $('foto'), frame = $('frame'), stageEl = frame.parentElement, btnImagem = $('btnImagem');
         let aberta = false;
 
-        function abrirImagem() {
-            if (aberta) return;
-            aberta = true;
-            foto.classList.remove('hide', 'missing');
-            foto.style.backgroundImage = 'url("' + ARQUIVO_IMAGEM + '")';
-            const teste = new Image();
-            teste.onerror = () => { foto.classList.add('missing'); foto.style.backgroundImage = 'none'; };
-            teste.src = ARQUIVO_IMAGEM;
-            void foto.offsetWidth; // reinicia a animação
-            foto.classList.add('show');
-            explosaoImagem();
-            btnImagem.querySelector('.label').textContent = 'Ocultar imagem';
+        /* ====== Música de fundo ====== */
+        const ARQUIVO_MUSICA = 'musica.mp3'; // coloque seu arquivo com este nome na pasta
+        const musica = new Audio(ARQUIVO_MUSICA);
+        musica.loop = true; musica.volume = 0;
+        const btnMusica = $('btnMusica'), rotuloMusica = $('rotuloMusica');
+        let fade = 0;
+
+        function volumeAte(alvoVol, aoFim) {
+            clearInterval(fade);
+            fade = setInterval(() => {
+                const d = alvoVol - musica.volume;
+                if (Math.abs(d) < .03) { musica.volume = alvoVol; clearInterval(fade); aoFim && aoFim(); return; }
+                musica.volume = Math.min(1, Math.max(0, musica.volume + Math.sign(d) * .03));
+            }, 50);
         }
+        btnMusica.addEventListener('click', () => {
+            if (musica.paused) {
+                musica.play().then(() => {
+                    btnMusica.classList.add('tocando');
+                    rotuloMusica.textContent = 'Pausar música';
+                    volumeAte(.6);
+                }).catch(() => {
+                    rotuloMusica.textContent = 'Falta o arquivo';
+                });
+            } else {
+                btnMusica.classList.remove('tocando');
+                rotuloMusica.textContent = 'Tocar música';
+                volumeAte(0, () => musica.pause());
+            }
+        });
+
+        let carregando = false;
+
+        function abrirImagem() {
+            if (aberta || carregando) return;
+            carregando = true;
+            btnImagem.disabled = true;
+            alvo.textContent = 'GET ' + ARQUIVO_IMAGEM;
+            codigo.textContent = 'enviando…'; codigo.className = 'status';
+            resultado.textContent = '';
+            setEstado('IMAGEM EM TRÂNSITO', true);
+
+            // baixa a imagem enquanto o pacote viaja
+            const t0 = performance.now();
+            const carga = new Promise(ok => {
+                const img = new Image();
+                img.onload = () => ok(true);
+                img.onerror = () => ok(false);
+                img.src = ARQUIVO_IMAGEM;
+            });
+
+            animarRequisicao(() => carga.then(achou => {
+                carregando = false; aberta = true;
+                btnImagem.disabled = false;
+                foto.classList.remove('hide', 'missing');
+                foto.style.backgroundImage = achou ? 'url("' + ARQUIVO_IMAGEM + '")' : 'none';
+                if (!achou) foto.classList.add('missing');
+                codigo.textContent = achou ? '200 OK · ' + Math.round(performance.now() - t0) + ' ms' : 'falhou';
+                codigo.className = 'status ' + (achou ? 'ok' : 'err');
+                void foto.offsetWidth; // reinicia a animação
+                frame.classList.remove('off'); frame.classList.add('on');
+                foto.classList.add('show');
+                explosaoImagem();
+                setEstado('PRONTO PARA REQUISITAR', false);
+                btnImagem.querySelector('.label').textContent = 'Ocultar imagem';
+            }));
+        }
+
+        // chuva de corações que sai da moldura quando a imagem é ocultada
+        const CORACAO = '<svg viewBox="0 0 24 24" width="100%" height="100%"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.3 2.6 4.5 6.3 4.5c2 0 3.7 1.1 4.7 2.8l1 1.6 1-1.6c1-1.7 2.7-2.8 4.7-2.8 3.7 0 5.4 3.8 3.9 7.2C19.5 16.4 12 21 12 21z" fill="currentColor"/></svg>';
+        function chuvaDeCoracoes() {
+            if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            const r = frame.getBoundingClientRect();
+            const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+            const cores = ['#ff4fa3', '#ff5d73', '#ff2e63', '#ff8fb8', '#ffb454'];
+            for (let i = 0; i < 40; i++) {
+                const h = document.createElement('span');
+                const tam = 16 + Math.random() * 30;
+                h.innerHTML = CORACAO;
+                h.style.cssText = `position:fixed;z-index:5;pointer-events:none;left:${cx - tam / 2}px;top:${cy - tam / 2}px;width:${tam}px;height:${tam}px;color:${cores[i % cores.length]};filter:drop-shadow(0 0 8px currentColor)`;
+                document.body.appendChild(h);
+                const ang = Math.random() * Math.PI * 2, dist = r.width * (.3 + Math.random() * .6);
+                const dx = Math.cos(ang) * dist, dy = Math.sin(ang) * dist - 140 - Math.random() * 180;
+                const giro = (Math.random() - .5) * 80;
+                const anim = h.animate([
+                    { transform: 'translate(0,0) scale(.2) rotate(0deg)', opacity: 0 },
+                    { transform: `translate(${dx * .4}px,${dy * .4}px) scale(1.1) rotate(${giro * .4}deg)`, opacity: 1, offset: .25 },
+                    { transform: `translate(${dx}px,${dy}px) scale(.7) rotate(${giro}deg)`, opacity: 0 }
+                ], { duration: 1500 + Math.random() * 1300, delay: Math.random() * 350, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'forwards' });
+                anim.onfinish = () => h.remove();
+            }
+        }
+
         function fecharImagem() {
             if (!aberta) return;
             aberta = false;
+            chuvaDeCoracoes();
             foto.classList.remove('show');
             foto.classList.add('hide');
-            foto.parentElement.style.transform = '';
+            frame.classList.add('off');
+            setTimeout(() => { if (!aberta) frame.classList.remove('on', 'off'); }, 500);
+            stageEl.style.transform = '';
             btnImagem.querySelector('.label').textContent = 'Mostrar imagem';
         }
         btnImagem.addEventListener('click', () => aberta ? fecharImagem() : abrirImagem());
@@ -444,11 +604,11 @@
         // inclinação 3D da imagem seguindo o cursor
         foto.addEventListener('pointermove', e => {
             if (!aberta) return;
-            const r = foto.getBoundingClientRect(), st = foto.parentElement;
+            const r = foto.getBoundingClientRect(), st = stageEl;
             const x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
             st.style.transform = `perspective(1200px) rotateY(${x * 14}deg) rotateX(${-y * 14}deg)`;
         });
-        foto.addEventListener('pointerleave', () => { foto.parentElement.style.transform = ''; });
+        foto.addEventListener('pointerleave', () => { stageEl.style.transform = ''; });
     </script>
 </body>
 </html>
