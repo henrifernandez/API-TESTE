@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="PT-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Requisição API</title>
+</head>
+<body>
+    <H1> Buscar mensagem</H1>
+    <button onclick="buscarMensagem()">Buscar</button>
+    <p id="resultado"></p>
+
+    <script>
+        function buscarMensagem() {
+            fetch('mensagem.txt')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('resultado').textContent = data ;
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                });
+        }
+    </script>
+
+
+    <button onclick="buscarMensagem2()">Buscar</button>
+    <p id="resultado"></p>
+
+    <script>
+        function buscarMensagem2() {
+            fetch('mensagem2.txt')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('resultado').textContent = data ;
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                });
+        }
+    </script>
+
+    
+    <button onclick="buscarMensagem3()">Buscar</button>
+    <p id="resultado"></p>
+
+    <script>
+        function buscarMensagem3() {
+            fetch('mensagem3.txt')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('resultado').textContent = data ;
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                });
+        }
+    </script>
+
+</body>
+</html>
