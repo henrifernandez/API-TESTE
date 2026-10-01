@@ -100,13 +100,41 @@
             display: grid; place-items: center;
             transition: transform .15s ease-out;
         }
+        .frame {
+            position: relative;
+            width: min(620px, 90vw, 78vh);
+            aspect-ratio: 1 / 1;
+            display: grid; place-items: center;
+            visibility: hidden;
+        }
+        .frame.on { visibility: visible; }
+                .aura, .ring, .orbit { position: absolute; border-radius: 50%; pointer-events: none; opacity: 0; }
+        .aura { inset: -14%; background: radial-gradient(circle, rgba(255,180,84,.55), rgba(61,240,210,.28) 45%, transparent 70%); filter: blur(30px); }
+        .ring { inset: -2.2%; background: conic-gradient(from 0deg, #3df0d2, #ffb454, #ff4fa3, #7a5cff, #3df0d2);
+                -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 6px));
+                        mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 6px)); }
+        .ring.glow { filter: blur(14px);
+                -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 22px), #000 calc(100% - 4px)); mask: radial-gradient(farthest-side, transparent calc(100% - 22px), #000 calc(100% - 4px)); }
+        .orbit { inset: -9%; }
+        .orbit i { position: absolute; top: -5px; left: calc(50% - 5px); width: 10px; height: 10px; border-radius: 50%;
+                   background: var(--c); box-shadow: 0 0 14px 4px var(--c); }
+        .frame.on .aura { opacity: 1; animation: breathe 2.6s ease-in-out infinite; }
+        .frame.on .ring { opacity: 1; animation: spin 5s linear infinite; }
+        .frame.on .orbit { opacity: 1; animation: spin var(--t) linear infinite; }
+        .frame.on .orbit.rev { animation-direction: reverse; }
+        .frame.off .aura, .frame.off .ring, .frame.off .orbit { opacity: 0; transition: opacity .35s; animation: none; }
+        .frame.on { animation: float 5s ease-in-out infinite; }
+        .frame.off { animation: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes breathe { 50% { transform: scale(1.08); opacity: .75; } }
+        @keyframes float { 50% { translate: 0 -10px; } }
         .photo {
             pointer-events: auto;
             position: relative;
-            width: min(440px, 80vw);
+            width: 100%;
             aspect-ratio: 1 / 1;
             border-radius: 50%;
-            border: 1px solid rgba(255, 180, 84, .45);
+            border: 0;
             background: #0a0f18 42% 58% / 118% no-repeat; /* recorta o fundo cinza e enquadra no círculo */
             box-shadow: 0 0 0 1px rgba(0,0,0,.4), 0 40px 90px rgba(0,0,0,.6), 0 0 80px rgba(255, 180, 84, .18);
             opacity: 0;
@@ -132,9 +160,10 @@
             padding: 6px 10px; font-size: 12px; background: rgba(5,7,13,.7); transform: none !important;
         }
         @keyframes reveal {
-            0%   { opacity: 0; clip-path: inset(50% 50% 50% 50% round 50%); transform: translateY(40px) rotateX(18deg) scale(.9); }
-            40%  { opacity: 1; clip-path: inset(46% 0 46% 0 round 50%); }
-            100% { opacity: 1; clip-path: inset(0 0 0 0 round 50%); transform: translateY(0) rotateX(0) scale(1); }
+            0%   { opacity: 0; clip-path: inset(50% 50% 50% 50% round 50%); transform: translateY(40px) rotateX(18deg) scale(.9); filter: brightness(3) saturate(0); }
+            35%  { opacity: 1; clip-path: inset(46% 0 46% 0 round 50%); filter: brightness(2) hue-rotate(90deg) saturate(2); }
+            60%  { filter: brightness(1.4) hue-rotate(-40deg) saturate(1.6); transform: translateY(0) rotateX(0) scale(1.06) skewX(-3deg); }
+            100% { opacity: 1; clip-path: inset(0 0 0 0 round 50%); transform: translateY(0) rotateX(0) scale(1); filter: none; }
         }
         @keyframes conceal {
             to { opacity: 0; clip-path: inset(50% 50% 50% 50% round 50%); transform: translateY(20px) scale(.92); }
@@ -175,9 +204,17 @@
         </section>
 
         <section class="stage">
-            <div class="photo" id="foto" role="img" aria-label="Imagem carregada">
-                <button class="close" id="fechar">Fechar</button>
-                <div class="fallback">Coloque o arquivo<br><strong>imagem.jpg</strong><br>na mesma pasta do index.html</div>
+            <div class="frame" id="frame">
+                <div class="aura"></div>
+                <div class="ring glow"></div>
+                <div class="ring"></div>
+                <div class="orbit" style="--t:7s"><i style="--c:#3df0d2"></i></div>
+                <div class="orbit rev" style="--t:11s;inset:-16%"><i style="--c:#ffb454"></i></div>
+                <div class="orbit" style="--t:15s;inset:-23%"><i style="--c:#ff4fa3"></i></div>
+                <div class="photo" id="foto" role="img" aria-label="Imagem carregada">
+                    <button class="close" id="fechar">Fechar</button>
+                    <div class="fallback">Coloque o arquivo<br><strong>imagem.jpg</strong><br>na mesma pasta do index.html</div>
+                </div>
             </div>
         </section>
     </main>
@@ -282,7 +319,23 @@
             });
         }
 
+        const BURST = 260, bPos = new Float32Array(BURST * 3), bVel = [];
+        const bGeo = new THREE.BufferGeometry();
+        bGeo.setAttribute('position', new THREE.BufferAttribute(bPos, 3));
+        const bMat = new THREE.PointsMaterial({ color: 0xffd08a, size: .12, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+        const burst = new THREE.Points(bGeo, bMat);
+        scene.add(burst);
+        let burstT = 1;
+        function dispararParticulas() {
+            burstT = 0;
+            for (let i = 0; i < BURST; i++) {
+                const a = Math.random() * Math.PI * 2, b = Math.acos(2 * Math.random() - 1), v = 3 + Math.random() * 7;
+                bPos.set([0, 0, 0], i * 3);
+                bVel[i] = [Math.sin(b) * Math.cos(a) * v, Math.sin(b) * Math.sin(a) * v, Math.cos(b) * v];
+            }
+        }
         explosaoImagem = function () {
+            dispararParticulas();
             imageBurst = 1;
             onda(new THREE.Vector3(0, 0, 0), AMBER);
             setTimeout(() => onda(new THREE.Vector3(0, 0, 0), ACCENT), 160);
@@ -328,6 +381,17 @@
                     packets.splice(i, 1);
                     p.aoChegar && p.aoChegar();
                 }
+            }
+            // partículas da imagem
+            if (burstT < 1) {
+                burstT += dt / 1.8;
+                for (let i = 0; i < BURST; i++) {
+                    bPos[i*3] += bVel[i][0] * dt; bPos[i*3+1] += bVel[i][1] * dt; bPos[i*3+2] += bVel[i][2] * dt;
+                    bVel[i][0] *= .985; bVel[i][1] *= .985; bVel[i][2] *= .985;
+                }
+                bGeo.attributes.position.needsUpdate = true;
+                bMat.opacity = Math.max(0, 1 - burstT);
+                bMat.color.setHSL((time * .4) % 1, .9, .65);
             }
             // ondas
             for (let i = waves.length - 1; i >= 0; i--) {
@@ -416,7 +480,7 @@
         botoes.forEach(b => b.addEventListener('click', () => buscar(b.dataset.file)));
 
         /* ====== Imagem ====== */
-        const foto = $('foto'), btnImagem = $('btnImagem');
+        const foto = $('foto'), frame = $('frame'), stageEl = frame.parentElement, btnImagem = $('btnImagem');
         let aberta = false;
 
         function abrirImagem() {
@@ -428,6 +492,7 @@
             teste.onerror = () => { foto.classList.add('missing'); foto.style.backgroundImage = 'none'; };
             teste.src = ARQUIVO_IMAGEM;
             void foto.offsetWidth; // reinicia a animação
+            frame.classList.remove('off'); frame.classList.add('on');
             foto.classList.add('show');
             explosaoImagem();
             btnImagem.querySelector('.label').textContent = 'Ocultar imagem';
@@ -437,7 +502,9 @@
             aberta = false;
             foto.classList.remove('show');
             foto.classList.add('hide');
-            foto.parentElement.style.transform = '';
+            frame.classList.add('off');
+            setTimeout(() => { if (!aberta) frame.classList.remove('on', 'off'); }, 500);
+            stageEl.style.transform = '';
             btnImagem.querySelector('.label').textContent = 'Mostrar imagem';
         }
         btnImagem.addEventListener('click', () => aberta ? fecharImagem() : abrirImagem());
@@ -447,11 +514,11 @@
         // inclinação 3D da imagem seguindo o cursor
         foto.addEventListener('pointermove', e => {
             if (!aberta) return;
-            const r = foto.getBoundingClientRect(), st = foto.parentElement;
+            const r = foto.getBoundingClientRect(), st = stageEl;
             const x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
             st.style.transform = `perspective(1200px) rotateY(${x * 14}deg) rotateX(${-y * 14}deg)`;
         });
-        foto.addEventListener('pointerleave', () => { foto.parentElement.style.transform = ''; });
+        foto.addEventListener('pointerleave', () => { stageEl.style.transform = ''; });
     </script>
 </body>
 </html>
