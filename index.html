@@ -76,6 +76,15 @@
         button .path { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); }
         button.image-btn { border-color: rgba(255, 180, 84, .35); }
         button.image-btn:hover { border-color: var(--accent-2); background: rgba(255, 180, 84, .08); }
+        button.music-btn { border-color: rgba(255, 79, 163, .35); }
+        button.music-btn:hover { border-color: #ff4fa3; background: rgba(255, 79, 163, .08); }
+        .eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; margin-right: 10px; }
+        .eq i { width: 3px; height: 4px; background: #ff4fa3; border-radius: 2px; }
+        .music-btn.tocando .eq i { animation: eq .9s ease-in-out infinite; }
+        .music-btn.tocando .eq i:nth-child(2) { animation-delay: -.3s; }
+        .music-btn.tocando .eq i:nth-child(3) { animation-delay: -.6s; }
+        .music-btn.tocando .eq i:nth-child(4) { animation-delay: -.15s; }
+        @keyframes eq { 50% { height: 14px; } }
         .sep { height: 1px; background: var(--line); margin: 6px 0; }
 
         .terminal {
@@ -194,6 +203,7 @@
                 <button data-file="mensagem2.txt"><span class="label">Buscar mensagem 2</span><span class="path">mensagem2.txt</span></button>
                 <button data-file="mensagem3.txt"><span class="label">Buscar mensagem 3</span><span class="path">mensagem3.txt</span></button>
                 <div class="sep"></div>
+                <button class="music-btn" id="btnMusica"><span class="label"><span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span id="rotuloMusica">Tocar música</span></span><span class="path">musica.mp3</span></button>
                 <button class="image-btn" id="btnImagem"><span class="label">Mostrar imagem</span><span class="path">imagem.jpg</span></button>
             </div>
 
@@ -482,6 +492,37 @@
         /* ====== Imagem ====== */
         const foto = $('foto'), frame = $('frame'), stageEl = frame.parentElement, btnImagem = $('btnImagem');
         let aberta = false;
+
+        /* ====== Música de fundo ====== */
+        const ARQUIVO_MUSICA = 'musica.mp3'; // coloque seu arquivo com este nome na pasta
+        const musica = new Audio(ARQUIVO_MUSICA);
+        musica.loop = true; musica.volume = 0;
+        const btnMusica = $('btnMusica'), rotuloMusica = $('rotuloMusica');
+        let fade = 0;
+
+        function volumeAte(alvoVol, aoFim) {
+            clearInterval(fade);
+            fade = setInterval(() => {
+                const d = alvoVol - musica.volume;
+                if (Math.abs(d) < .03) { musica.volume = alvoVol; clearInterval(fade); aoFim && aoFim(); return; }
+                musica.volume = Math.min(1, Math.max(0, musica.volume + Math.sign(d) * .03));
+            }, 50);
+        }
+        btnMusica.addEventListener('click', () => {
+            if (musica.paused) {
+                musica.play().then(() => {
+                    btnMusica.classList.add('tocando');
+                    rotuloMusica.textContent = 'Pausar música';
+                    volumeAte(.6);
+                }).catch(() => {
+                    rotuloMusica.textContent = 'Falta o arquivo';
+                });
+            } else {
+                btnMusica.classList.remove('tocando');
+                rotuloMusica.textContent = 'Tocar música';
+                volumeAte(0, () => musica.pause());
+            }
+        });
 
         let carregando = false;
 
