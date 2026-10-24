@@ -1,0 +1,288 @@
+openapi: 3.1.0
+info:
+  title: API-TESTE
+  version: 1.0.0
+  description: API de demonstração em PHP com respostas JSON e erros padronizados.
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+  - url: https://apiteste-nine.vercel.app
+    description: Produção (Vercel)
+  - url: http://localhost:8080
+    description: Desenvolvimento local
+tags:
+  - name: Geral
+  - name: Mensagens
+paths:
+  /api/v1:
+    get:
+      tags: [Geral]
+      operationId: obterRaiz
+      summary: Descreve a API e lista as rotas
+      responses:
+        '200':
+          description: Informações da API.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControl'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Raiz'
+              example:
+                nome: API-TESTE
+                versao: 1.0.0
+                descricao: API de demonstração em PHP com respostas JSON e erros padronizados.
+                rotas:
+                  - GET /api/v1/status
+                  - GET /api/v1/mensagens
+                  - GET /api/v1/mensagens/{id}
+        '405':
+          $ref: '#/components/responses/MetodoNaoPermitido'
+        '500':
+          $ref: '#/components/responses/ErroInterno'
+  /api/v1/status:
+    get:
+      tags: [Geral]
+      operationId: obterStatus
+      summary: Informa se a API está no ar
+      description: Esta resposta nunca é guardada em cache (`Cache-Control: no-store`).
+      responses:
+        '200':
+          description: A API está funcionando.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+              example:
+                status: ok
+                mensagem: A API está no ar.
+                versao: 1.0.0
+                horario: '2026-10-24T18:00:00Z'
+        '405':
+          $ref: '#/components/responses/MetodoNaoPermitido'
+        '500':
+          $ref: '#/components/responses/ErroInterno'
+  /api/v1/mensagens:
+    get:
+      tags: [Mensagens]
+      operationId: listarMensagens
+      summary: Lista todas as mensagens
+      responses:
+        '200':
+          description: Lista de mensagens.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControl'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListaDeMensagens'
+              example:
+                total: 3
+                mensagens:
+                  - id: 1
+                    titulo: Conexão estabelecida
+                    texto: A API recebeu sua requisição e respondeu com sucesso.
+                  - id: 2
+                    titulo: Respostas em JSON
+                    texto: Toda resposta usa JSON em UTF-8, com o código de status HTTP que corresponde ao resultado.
+                  - id: 3
+                    titulo: Erros padronizados
+                    texto: Quando algo dá errado, a API explica o motivo no formato Problem Details (RFC 9457).
+        '405':
+          $ref: '#/components/responses/MetodoNaoPermitido'
+        '500':
+          $ref: '#/components/responses/ErroInterno'
+  /api/v1/mensagens/{id}:
+    get:
+      tags: [Mensagens]
+      operationId: obterMensagem
+      summary: Busca uma mensagem pelo id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Número inteiro positivo, sem zeros à esquerda.
+          schema:
+            type: string
+            pattern: '^[1-9][0-9]*$'
+            examples: ['1']
+      responses:
+        '200':
+          description: A mensagem encontrada.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControl'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensagem'
+              example:
+                id: 2
+                titulo: Respostas em JSON
+                texto: Toda resposta usa JSON em UTF-8, com o código de status HTTP que corresponde ao resultado.
+        '400':
+          description: O id não é um número inteiro positivo (por exemplo 0, -1, abc, 1.5 ou 01).
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: about:blank
+                title: Identificador inválido
+                status: 400
+                detail: O id deve ser um número inteiro positivo, por exemplo /api/v1/mensagens/1.
+                instance: /api/v1/mensagens/abc
+                codigo: ID_INVALIDO
+        '404':
+          description: Não existe mensagem com esse id.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: about:blank
+                title: Mensagem não encontrada
+                status: 404
+                detail: Não existe mensagem com id 99. Os ids válidos vão de 1 a 3.
+                instance: /api/v1/mensagens/99
+                codigo: MENSAGEM_NAO_ENCONTRADA
+        '405':
+          $ref: '#/components/responses/MetodoNaoPermitido'
+        '500':
+          $ref: '#/components/responses/ErroInterno'
+components:
+  headers:
+    CacheControl:
+      description: Resposta pública, guardada em cache por 60 segundos.
+      schema:
+        type: string
+        const: public, max-age=60
+    NoStore:
+      description: Resposta que não deve ser guardada em cache.
+      schema:
+        type: string
+        const: no-store
+  responses:
+    MetodoNaoPermitido:
+      description: A rota aceita apenas GET, HEAD e OPTIONS.
+      headers:
+        Allow:
+          description: Métodos aceitos pela rota.
+          schema:
+            type: string
+            const: GET, HEAD, OPTIONS
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: Método não permitido
+            status: 405
+            detail: A rota /api/v1/status aceita apenas GET e HEAD.
+            instance: /api/v1/status
+            codigo: METODO_NAO_PERMITIDO
+    ErroInterno:
+      description: Erro inesperado no servidor. Detalhes técnicos ficam apenas no log do servidor.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: Erro interno
+            status: 500
+            detail: Ocorreu um erro inesperado no servidor. Tente novamente em instantes.
+            instance: /api/v1/status
+            codigo: ERRO_INTERNO
+  schemas:
+    Raiz:
+      type: object
+      required: [nome, versao, descricao, rotas]
+      properties:
+        nome:
+          type: string
+        versao:
+          type: string
+        descricao:
+          type: string
+        rotas:
+          type: array
+          items:
+            type: string
+    Status:
+      type: object
+      required: [status, mensagem, versao, horario]
+      properties:
+        status:
+          type: string
+          const: ok
+        mensagem:
+          type: string
+        versao:
+          type: string
+        horario:
+          type: string
+          format: date-time
+          description: Horário do servidor em UTC (ISO 8601).
+    Mensagem:
+      type: object
+      required: [id, titulo, texto]
+      properties:
+        id:
+          type: integer
+          minimum: 1
+        titulo:
+          type: string
+        texto:
+          type: string
+    ListaDeMensagens:
+      type: object
+      required: [total, mensagens]
+      properties:
+        total:
+          type: integer
+          minimum: 0
+        mensagens:
+          type: array
+          items:
+            $ref: '#/components/schemas/Mensagem'
+    ProblemDetails:
+      type: object
+      description: Erro no formato Problem Details (RFC 9457), com o campo extra `codigo`.
+      required: [type, title, status, detail, instance, codigo]
+      properties:
+        type:
+          type: string
+          const: about:blank
+        title:
+          type: string
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        detail:
+          type: string
+        instance:
+          type: string
+          description: Caminho da requisição que gerou o erro.
+        codigo:
+          type: string
+          enum:
+            - ROTA_NAO_ENCONTRADA
+            - MENSAGEM_NAO_ENCONTRADA
+            - ID_INVALIDO
+            - METODO_NAO_PERMITIDO
+            - ERRO_INTERNO
