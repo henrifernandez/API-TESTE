@@ -1,5 +1,5 @@
-vendor/
-node_modules/
+/vendor/
+/node_modules/
 .env
 .phpunit.cache/
 .php-cs-fixer.cache

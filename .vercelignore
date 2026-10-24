@@ -1,4 +1,4 @@
-vendor/
-tests/
-.github/
-node_modules/
+/vendor/
+/tests/
+/.github/
+/node_modules/

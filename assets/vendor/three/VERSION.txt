@@ -1,0 +1,14 @@
+three 0.186.1 (licença MIT, veja LICENSE)
+
+Origem: https://cdn.jsdelivr.net/npm/three@0.186.1/build/
+Arquivos: three.module.min.js e three.core.min.js (build ES module minificado).
+Versão conferida em https://registry.npmjs.org/three/latest em 2026-10-24.
+
+Alteração local (única): em three.module.min.js, as 2 ocorrências do import
+"./three.core.js" foram trocadas por "./three.core.min.js", porque o build minificado
+da CDN aponta para o nome sem ".min" e este projeto guarda apenas o arquivo minificado.
+
+SHA-256 dos arquivos baixados, antes da alteração:
+3bc833fceb6577bd1a380388f832ae61cd6e2f78ad02b0bf0d5adf5a4a9334fe  three.module.min.js
+3b346151f65ffdfca3e4c002bd58966b78c423087fb48a873f83200de1bffc48  three.core.min.js
+8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc  LICENSE
