@@ -1,0 +1,103 @@
+const ROTULO_PAUSAR = 'Pausar animação';
+const ROTULO_RETOMAR = 'Retomar animação';
+
+function temWebGL() {
+    try {
+        const teste = document.createElement('canvas');
+        const contexto = teste.getContext('webgl2') || teste.getContext('webgl');
+        if (!contexto) {
+            return false;
+        }
+        contexto.getExtension('WEBGL_lose_context')?.loseContext();
+
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Controla o visualizador: anel em WebGL quando possível; SVG estático caso contrário
+ * (sem WebGL ou com prefers-reduced-motion). O three.js só é baixado no primeiro caso.
+ */
+export function criarVisual({ palco, canvas, botaoPausa }) {
+    const preferenciaMovimento = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let anel = null;
+    let geracao = 0;
+    let estado = 'repouso';
+    let pausadoPeloUsuario = false;
+
+    function aplicarModo(modo) {
+        palco.dataset.modo = modo;
+        botaoPausa.hidden = modo !== 'animado';
+    }
+
+    function movimentoAtivo() {
+        return anel !== null && !pausadoPeloUsuario && !document.hidden;
+    }
+
+    function sincronizarMovimento() {
+        anel?.definirMovimento(movimentoAtivo());
+    }
+
+    function descartarAnel() {
+        anel?.destruir();
+        anel = null;
+    }
+
+    async function iniciar() {
+        const minhaGeracao = ++geracao;
+        descartarAnel();
+
+        if (preferenciaMovimento.matches || !temWebGL()) {
+            aplicarModo('estatico');
+
+            return;
+        }
+
+        try {
+            const { criarAnel } = await import('./anel.js');
+            if (minhaGeracao !== geracao) {
+                return;
+            }
+            anel = criarAnel(canvas, {
+                aoPerderContexto: () => {
+                    geracao++;
+                    descartarAnel();
+                    aplicarModo('estatico');
+                },
+            });
+            anel.definirEstado(estado);
+            aplicarModo('animado');
+            sincronizarMovimento();
+        } catch {
+            descartarAnel();
+            aplicarModo('estatico');
+        }
+    }
+
+    botaoPausa.addEventListener('click', () => {
+        pausadoPeloUsuario = !pausadoPeloUsuario;
+        botaoPausa.textContent = pausadoPeloUsuario ? ROTULO_RETOMAR : ROTULO_PAUSAR;
+        sincronizarMovimento();
+    });
+
+    // Aba oculta: para o laço de animação e retoma ao voltar (se o usuário não pausou).
+    document.addEventListener('visibilitychange', sincronizarMovimento);
+    preferenciaMovimento.addEventListener('change', iniciar);
+
+    iniciar();
+
+    return {
+        /** Estados: repouso, aguardando, sucesso, erro. */
+        definirEstado(novo) {
+            estado = novo;
+            document.body.dataset.estado = novo;
+            anel?.definirEstado(novo);
+        },
+        /** Verdadeiro quando há movimento contínuo na tela agora. */
+        animando() {
+            return movimentoAtivo();
+        },
+    };
+}
