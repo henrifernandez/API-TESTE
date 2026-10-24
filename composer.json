@@ -1,0 +1,33 @@
+{
+    "name": "henrifernandez/api-teste",
+    "description": "API de demonstração em PHP com respostas JSON e erros padronizados (RFC 9457).",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": "^8.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "ApiTeste\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ApiTeste\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "optimize-autoloader": true
+    },
+    "scripts": {
+        "test": "phpunit",
+        "lint": "php-cs-fixer fix --dry-run --diff --using-cache=no",
+        "stan": "phpstan analyse --memory-limit=512M",
+        "check": [
+            "@lint",
+            "@stan",
+            "@test"
+        ]
+    }
+}
