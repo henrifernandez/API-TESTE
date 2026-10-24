@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'reforma/**']
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  php:
+    name: PHP (lint, análise estática e testes)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.4'
+          extensions: mbstring
+          coverage: none
+          tools: composer:v2
+
+      - name: Instalar dependências
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Lint (php-cs-fixer)
+        run: composer lint
+
+      - name: Análise estática (phpstan, nível 6)
+        run: composer stan
+
+      - name: Testes (phpunit)
+        run: composer test
+
+  acessibilidade:
+    name: Acessibilidade (axe-core, WCAG 2.2 AA)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.4'
+          extensions: mbstring
+          coverage: none
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: tests/a11y/package-lock.json
+
+      - name: Instalar Playwright e axe-core
+        working-directory: tests/a11y
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Subir servidor local
+        run: |
+          nohup php -S localhost:8080 router.php > /tmp/php-server.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -fsS http://localhost:8080/api/v1/status > /dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/php-server.log
+          exit 1
+
+      - name: Rodar axe (falha se houver violação)
+        working-directory: tests/a11y
+        env:
+          BASE_URL: http://localhost:8080
+        run: npm run axe
