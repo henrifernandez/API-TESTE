@@ -5,6 +5,8 @@
     }
   },
   "routes": [
+    { "src": "/(src|tests|vendor|\\.github)(/.*)?", "status": 404 },
+    { "src": "/(composer\\.(json|lock)|phpunit\\.xml\\.dist|phpstan\\.neon\\.dist|\\.php-cs-fixer\\.dist\\.php|router\\.php|\\.gitattributes|\\.gitignore|\\.vercelignore)", "status": 404 },
     { "src": "/api/(.*)", "dest": "/api/index.php" }
   ]
 }
