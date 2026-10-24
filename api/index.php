@@ -8,6 +8,8 @@ declare(strict_types=1);
 
 // Nunca exibe erros de PHP ao cliente; eles seguem para o log do servidor.
 ini_set('display_errors', '0');
+// Evita o Content-Type padrão (text/html) em respostas sem corpo, como o 204 do OPTIONS.
+ini_set('default_mimetype', '');
 
 $raiz = dirname(__DIR__);
 
