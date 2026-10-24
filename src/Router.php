@@ -33,7 +33,7 @@ final class Router
         ?Closure $relogio = null,
         ?Closure $registrar = null,
     ) {
-        $this->relogio = $relogio ?? static fn (): DateTimeImmutable => new DateTimeImmutable('now', new DateTimeZone('UTC'));
+        $this->relogio = $relogio ?? static fn(): DateTimeImmutable => new DateTimeImmutable('now', new DateTimeZone('UTC'));
         $this->registrar = $registrar ?? static function (string $texto): void {
             error_log($texto);
         };

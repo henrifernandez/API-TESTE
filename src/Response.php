@@ -22,8 +22,7 @@ final readonly class Response
         public int $status,
         public array $headers = [],
         public string $body = '',
-    ) {
-    }
+    ) {}
 
     /**
      * @param array<mixed> $data

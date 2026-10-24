@@ -29,8 +29,8 @@ final readonly class Request
         $uri = is_string($server['REQUEST_URI'] ?? null) ? $server['REQUEST_URI'] : '/';
 
         // Remove query string e fragmento sem decodificar o caminho.
-        $path = strtok($uri, '?#');
+        $path = substr($uri, 0, strcspn($uri, '?#'));
 
-        return new self($method, $path === false || $path === '' ? '/' : $path);
+        return new self($method, $path === '' ? '/' : $path);
     }
 }

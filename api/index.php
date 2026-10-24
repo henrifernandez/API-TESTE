@@ -25,4 +25,4 @@ if (is_file($raiz . '/vendor/autoload.php')) {
     });
 }
 
-(new ApiTeste\Router())->handle(ApiTeste\Request::fromGlobals())->enviar();
+new ApiTeste\Router()->handle(ApiTeste\Request::fromGlobals())->enviar();

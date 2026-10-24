@@ -17,8 +17,7 @@ final readonly class Problema
         public string $titulo,
         public string $detalhe,
         public string $instancia,
-    ) {
-    }
+    ) {}
 
     public static function rotaNaoEncontrada(string $caminho): self
     {
