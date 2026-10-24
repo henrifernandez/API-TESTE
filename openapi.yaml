@@ -47,7 +47,7 @@ paths:
       tags: [Geral]
       operationId: obterStatus
       summary: Informa se a API está no ar
-      description: Esta resposta nunca é guardada em cache (`Cache-Control: no-store`).
+      description: "Esta resposta nunca é guardada em cache (cabeçalho `Cache-Control: no-store`)."
       responses:
         '200':
           description: A API está funcionando.
