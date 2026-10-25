@@ -152,12 +152,24 @@ O `Router::handle()` recebe um `Request` e devolve um `Response`, sem tocar em s
 
 O console (`index.html`, `assets/css/app.css`, `assets/js/*.js`) chama as rotas com `fetch` e mostra método, URL, status HTTP, tempo em ms e o JSON formatado. O resultado é anunciado por uma única região `role="status"`, de uma vez só.
 
-O visualizador é uma cena em Three.js 0.186.1, guardada localmente em `assets/vendor/three/` (licença MIT, veja `VERSION.txt`). O servidor é um núcleo em wireframe ciano com duas órbitas, o cliente é um octaedro âmbar, e há um campo de estrelas ao fundo. Uma curva liga os dois: enquanto a requisição está em trânsito, um pacote âmbar viaja por ela. Quando a resposta chega, o pacote entra no núcleo, que brilha em ciano em respostas 2xx ou pisca em vermelho com um tremor de cerca de 600 ms em 4xx, 5xx e falhas de rede, e depois volta ao repouso. A câmera acompanha o mouse com um parallax suave (desligado em movimento reduzido e com a animação pausada). A cena fica em `assets/js/cena.js`, e `assets/js/visual.js` decide entre ela e o quadro estático.
+O visualizador é uma cena em Three.js 0.186.1 que ocupa a tela inteira atrás do painel, guardada localmente em `assets/vendor/three/` (licença MIT, veja `VERSION.txt`). O servidor é um núcleo em wireframe ciano com duas órbitas, o cliente é um octaedro âmbar, e há um campo de estrelas ao fundo. Uma curva liga os dois e, enquanto a requisição está em trânsito, um pacote âmbar viaja por ela. A câmera acompanha o mouse com um parallax suave. Quando a resposta chega, a animação depende da rota e do resultado:
+
+| Botão | Resultado | Animação |
+| --- | --- | --- |
+| Consultar status | 200 | pacote rápido e direto; o núcleo pulsa em ciano e solta uma onda que se expande e some |
+| Listar mensagens | 200 | três pacotes em fila chegam em cascata, o núcleo acende três vezes (uma a cada 0,5 s) e três satélites orbitam por alguns segundos |
+| Buscar mensagem 2 | 200 | pacote com rastro longo; o núcleo gira mais rápido por cerca de 1,5 s e o número do id sobe em pontos |
+| Testar erro 404 (ou outro 4xx/5xx) | erro | o pacote para a cerca de 60% da curva, congela 0,3 s com micro tremor e rastro vermelho em glitch, a curva se parte por um instante, a câmera balança, o painel sacode até 6 px por 0,5 s, o pacote vira faíscas e o núcleo falha antes de voltar ao calmo |
+| qualquer rota | falha de rede | o pacote perde brilho e cai antes de chegar, sem tremor |
+
+Nenhum elemento pisca mais de 3 vezes por segundo e não há flash de tela cheia. O texto do painel (método, URL, status, tempo e corpo) é o mesmo em todos os casos. A cena fica em `assets/js/cena.js`, e `assets/js/visual.js` escolhe a variante pela rota, decide entre a cena e o quadro estático e controla a pausa e o balanço do painel.
 
 Cuidados de acessibilidade (meta: WCAG 2.2 AA):
 
-- Com `prefers-reduced-motion: reduce` ou sem WebGL, o console mostra um SVG estático do núcleo wireframe com órbitas (cor e forma mudam, nada se move) e o Three.js nem é baixado.
-- O botão "Pausar animação" / "Retomar animação" é operável por teclado, e a animação também pausa quando a aba fica oculta.
+- Com `prefers-reduced-motion: reduce` ou sem WebGL, o fundo é um SVG estático do núcleo wireframe com órbitas. No sucesso aparece um halo ciano; no erro, o núcleo fica tracejado em vermelho, a curva partida e o pacote parado com faíscas. Nada se move e o Three.js nem é baixado.
+- Tremor, glitch e balanço (da câmera e do painel) só rodam com a animação ativa: ficam desligados com movimento reduzido, com a animação pausada e com a aba oculta. O balanço do painel usa apenas `transform`, então não move o foco nem refaz o layout.
+- O painel tem fundo quase opaco, e o contraste do texto passa de 6,5:1 mesmo com branco puro atrás dele.
+- O botão "Pausar animação" / "Retomar animação", no topo do painel, é operável por teclado e congela o quadro atual. A animação também pausa quando a aba fica oculta.
 - Os botões ficam desabilitados com `aria-busy` durante a requisição, e o foco volta ao botão usado.
 - O `<canvas>` é `aria-hidden`, a página tem `lang="pt-BR"`, um único `h1`, landmark `main`, foco visível e alvos de pelo menos 24 px.
 
