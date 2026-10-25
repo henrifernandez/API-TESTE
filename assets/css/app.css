@@ -288,10 +288,12 @@ h1 {
 
 /* Quadro estático (movimento reduzido ou sem WebGL): núcleo wireframe com órbitas. */
 .cena-svg {
+    /* Área livre ao lado do painel: recuo lateral + painel de 480px + espaço entre colunas. */
+    --recuo: calc(clamp(16px, 4vw, 56px) + 480px + clamp(24px, 4vw, 56px));
     position: absolute;
     top: 50%;
-    right: 0;
-    width: min(64vw, 1000px);
+    left: var(--recuo);
+    width: calc(100% - var(--recuo) - 28px);
     height: auto;
     aspect-ratio: 22 / 15;
     transform: translateY(-50%);
@@ -427,7 +429,6 @@ body[data-estado="erro"] .svg-faiscas {
 
     .cena-svg {
         top: 0;
-        right: auto;
         left: 0;
         width: 100%;
         height: min(38vh, 300px);

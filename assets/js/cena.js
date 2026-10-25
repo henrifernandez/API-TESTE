@@ -28,7 +28,8 @@ const LARGURA_CELULAR = 860; // mesma largura em que o CSS empilha o painel acim
 // Extensão horizontal da cena (do cliente à borda da órbita externa), para caber em telas estreitas.
 const LARGURA_UTIL = 12.8;
 const CENTRO_UTIL_X = 1;
-const X_VISIVEL = -2.2; // ponto da curva que aparece logo ao lado do painel
+const BORDA_CLIENTE_X = -5.4; // borda esquerda do octaedro do cliente
+const MARGEM_PX = 28; // folga entre o painel e a cena, e entre a cena e a borda da tela
 
 /**
  * Uma variante por tipo de rota. Enquanto a resposta não chega, cada pacote se aproxima do seu
@@ -785,7 +786,7 @@ export function criarCena(canvas, { painel = null, aoPerderContexto = () => {}, 
      * à direita do painel; no celular a cena inteira cabe acima do painel.
      */
     function redimensionar() {
-        const largura = Math.max(1, window.innerWidth);
+        const largura = Math.max(1, document.documentElement.clientWidth);
         const altura = Math.max(1, window.innerHeight);
         renderer.setSize(largura, altura, false);
         camera.aspect = largura / altura;
@@ -796,13 +797,15 @@ export function criarCena(canvas, { painel = null, aoPerderContexto = () => {}, 
         const caixa = painel ? painel.getBoundingClientRect() : null;
 
         if (largura > LARGURA_CELULAR) {
-            // A curva sai de trás do painel: o trecho visível começa em X_VISIVEL e a órbita
-            // externa termina na borda direita da tela.
+            // Área livre: da borda direita do painel (mais a margem) até a borda direita da tela.
+            // O caminho inteiro, do octaedro do cliente à órbita do núcleo, cabe nela; se ela
+            // for estreita, a escala diminui em vez de esconder parte da cena.
             const direita = caixa ? caixa.right : largura * 0.4;
-            const extensao = POSICAO_NUCLEO.x + 3.2 - X_VISIVEL;
-            const escala = THREE.MathUtils.clamp(((largura - direita - 40) * porPixel) / extensao, 0.55, 1.2);
+            const inicio = direita + MARGEM_PX;
+            const util = Math.max(1, largura - MARGEM_PX - inicio);
+            const escala = Math.min(1.2, (util * porPixel) / LARGURA_UTIL);
             mundo.scale.setScalar(escala);
-            mundo.position.set((direita + 20 - largura / 2) * porPixel - X_VISIVEL * escala, 0, 0);
+            mundo.position.set((inicio - largura / 2) * porPixel - BORDA_CLIENTE_X * escala, 0, 0);
         } else {
             const topoPainel = caixa ? caixa.top + window.scrollY : altura * 0.38;
             const area = THREE.MathUtils.clamp(topoPainel, altura * 0.2, altura * 0.6);
