@@ -17,12 +17,12 @@ function temWebGL() {
 }
 
 /**
- * Controla o visualizador: anel em WebGL quando possível; SVG estático caso contrário
+ * Controla o visualizador: cena em WebGL quando possível; SVG estático caso contrário
  * (sem WebGL ou com prefers-reduced-motion). O three.js só é baixado no primeiro caso.
  */
 export function criarVisual({ palco, canvas, botaoPausa }) {
     const preferenciaMovimento = window.matchMedia('(prefers-reduced-motion: reduce)');
-    let anel = null;
+    let cena = null;
     let geracao = 0;
     let estado = 'repouso';
     let pausadoPeloUsuario = false;
@@ -33,21 +33,21 @@ export function criarVisual({ palco, canvas, botaoPausa }) {
     }
 
     function movimentoAtivo() {
-        return anel !== null && !pausadoPeloUsuario && !document.hidden;
+        return cena !== null && !pausadoPeloUsuario && !document.hidden;
     }
 
     function sincronizarMovimento() {
-        anel?.definirMovimento(movimentoAtivo());
+        cena?.definirMovimento(movimentoAtivo());
     }
 
-    function descartarAnel() {
-        anel?.destruir();
-        anel = null;
+    function descartarCena() {
+        cena?.destruir();
+        cena = null;
     }
 
     async function iniciar() {
         const minhaGeracao = ++geracao;
-        descartarAnel();
+        descartarCena();
 
         if (preferenciaMovimento.matches || !temWebGL()) {
             aplicarModo('estatico');
@@ -56,22 +56,22 @@ export function criarVisual({ palco, canvas, botaoPausa }) {
         }
 
         try {
-            const { criarAnel } = await import('./anel.js');
+            const { criarCena } = await import('./cena.js');
             if (minhaGeracao !== geracao) {
                 return;
             }
-            anel = criarAnel(canvas, {
+            cena = criarCena(canvas, {
                 aoPerderContexto: () => {
                     geracao++;
-                    descartarAnel();
+                    descartarCena();
                     aplicarModo('estatico');
                 },
             });
-            anel.definirEstado(estado);
+            cena.definirEstado(estado);
             aplicarModo('animado');
             sincronizarMovimento();
         } catch {
-            descartarAnel();
+            descartarCena();
             aplicarModo('estatico');
         }
     }
@@ -93,7 +93,7 @@ export function criarVisual({ palco, canvas, botaoPausa }) {
         definirEstado(novo) {
             estado = novo;
             document.body.dataset.estado = novo;
-            anel?.definirEstado(novo);
+            cena?.definirEstado(novo);
         },
         /** Verdadeiro quando há movimento contínuo na tela agora. */
         animando() {

@@ -1,7 +1,7 @@
 import { requisitar } from './api.js';
 import { criarVisual } from './visual.js';
 
-const ESPERA_MINIMA_ANIMADA_MS = 500;
+const ESPERA_MINIMA_ANIMADA_MS = 900;
 
 const $ = (seletor) => document.querySelector(seletor);
 const botoes = [...document.querySelectorAll('button[data-caminho]')];
@@ -84,7 +84,7 @@ async function enviar(botao) {
 
     const retorno = await requisitar(caminho);
 
-    // Com animação ativa, mantém o anel âmbar por um instante para a espera ser perceptível.
+    // Com animação ativa, mantém o pacote em trânsito por um instante para a espera ser perceptível.
     if (visual.animando()) {
         const restante = ESPERA_MINIMA_ANIMADA_MS - (performance.now() - inicio);
         if (restante > 0) {
