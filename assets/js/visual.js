@@ -16,6 +16,18 @@ function temWebGL() {
     }
 }
 
+/** Escolhe a variante da animação pela rota: status, lista de mensagens ou uma mensagem. */
+function variantePorRota(rota = '') {
+    const caminho = rota.split('?')[0].replace(/\/+$/, '');
+    const mensagem = caminho.match(/\/mensagens\/(\d+)$/);
+
+    if (mensagem) {
+        return { variante: 'mensagem', id: mensagem[1] };
+    }
+
+    return { variante: /\/mensagens$/.test(caminho) ? 'lista' : 'status' };
+}
+
 /**
  * Controla o visualizador: cena em WebGL quando possível; SVG estático caso contrário
  * (sem WebGL ou com prefers-reduced-motion). O three.js só é baixado no primeiro caso.
@@ -25,6 +37,7 @@ export function criarVisual({ palco, canvas, botaoPausa, painel }) {
     let cena = null;
     let geracao = 0;
     let estado = 'repouso';
+    let contextoAtual = {};
     let pausadoPeloUsuario = false;
 
     function aplicarModo(modo) {
@@ -68,7 +81,7 @@ export function criarVisual({ palco, canvas, botaoPausa, painel }) {
                     aplicarModo('estatico');
                 },
             });
-            cena.definirEstado(estado);
+            cena.definirEstado(estado, contextoAtual);
             aplicarModo('animado');
             sincronizarMovimento();
         } catch {
@@ -91,10 +104,12 @@ export function criarVisual({ palco, canvas, botaoPausa, painel }) {
 
     return {
         /** Estados: repouso, aguardando, sucesso, erro. */
-        definirEstado(novo) {
+        /** O contexto traz a rota e, no fim, a falha de rede (`falha: 'rede'`) ou o status HTTP. */
+        definirEstado(novo, contexto = {}) {
             estado = novo;
+            contextoAtual = { ...variantePorRota(contexto.rota), ...contexto };
             document.body.dataset.estado = novo;
-            cena?.definirEstado(novo);
+            cena?.definirEstado(novo, contextoAtual);
         },
         /** Verdadeiro quando há movimento contínuo na tela agora. */
         animando() {

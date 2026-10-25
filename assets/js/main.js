@@ -32,8 +32,8 @@ const ROTULOS_ESTADO = {
 
 let ocupado = false;
 
-function definirEstado(estado) {
-    visual.definirEstado(estado);
+function definirEstado(estado, contexto) {
+    visual.definirEstado(estado, contexto);
     estadoTexto.textContent = ROTULOS_ESTADO[estado];
 }
 
@@ -73,7 +73,7 @@ async function enviar(botao) {
     const inicio = performance.now();
 
     definirOcupado(true);
-    definirEstado('aguardando');
+    definirEstado('aguardando', { rota: caminho });
     mostrar({
         metodo: 'GET',
         url: new URL(caminho, window.location.href).href,
@@ -102,7 +102,7 @@ async function enviar(botao) {
             corpo: retorno.mensagem,
             tom: 'erro',
         });
-        definirEstado('erro');
+        definirEstado('erro', { rota: caminho, falha: 'rede' });
     } else {
         const sucesso = retorno.status >= 200 && retorno.status < 300;
         mostrar({
@@ -113,7 +113,7 @@ async function enviar(botao) {
             corpo: retorno.corpo,
             tom: sucesso ? 'sucesso' : 'erro',
         });
-        definirEstado(sucesso ? 'sucesso' : 'erro');
+        definirEstado(sucesso ? 'sucesso' : 'erro', { rota: caminho, status: retorno.status, falha: sucesso ? undefined : 'http' });
     }
 
     definirOcupado(false);
