@@ -20,6 +20,7 @@ const visual = criarVisual({
     palco: $('#palco'),
     canvas: $('#cena'),
     botaoPausa: $('#pausa'),
+    painel: $('.painel'),
 });
 
 const ROTULOS_ESTADO = {

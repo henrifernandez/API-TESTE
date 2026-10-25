@@ -20,7 +20,7 @@ function temWebGL() {
  * Controla o visualizador: cena em WebGL quando possível; SVG estático caso contrário
  * (sem WebGL ou com prefers-reduced-motion). O three.js só é baixado no primeiro caso.
  */
-export function criarVisual({ palco, canvas, botaoPausa }) {
+export function criarVisual({ palco, canvas, botaoPausa, painel }) {
     const preferenciaMovimento = window.matchMedia('(prefers-reduced-motion: reduce)');
     let cena = null;
     let geracao = 0;
@@ -61,6 +61,7 @@ export function criarVisual({ palco, canvas, botaoPausa }) {
                 return;
             }
             cena = criarCena(canvas, {
+                painel,
                 aoPerderContexto: () => {
                     geracao++;
                     descartarCena();

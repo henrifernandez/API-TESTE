@@ -18,11 +18,11 @@ const PONTOS_RASTRO = 14;
 const TRANSITO_S = 1.1; // tempo do pacote para cruzar a curva
 const CHEGADA_S = 0.4; // tempo para terminar a travessia quando a resposta já chegou
 const TREMOR_S = 0.6;
-const DISTANCIA_MINIMA = 9;
-// Área que a cena ocupa (em unidades do mundo) e que precisa caber no enquadramento.
-const LARGURA_UTIL = 13.6;
-const ALTURA_UTIL = 8.4;
-const DESLOCAMENTO_X = -0.9; // centraliza cliente, núcleo e órbitas no quadro
+const DISTANCIA_CAMERA = 11;
+const LARGURA_CELULAR = 860; // mesma largura em que o CSS empilha o painel acima da cena
+// Extensão horizontal da cena (do cliente à borda da órbita externa), para caber em telas estreitas.
+const LARGURA_UTIL = 12.8;
+const CENTRO_UTIL_X = 1;
 
 function gerador(semente) {
     let s = semente;
@@ -47,7 +47,7 @@ function suavizar(u) {
  * Estados: repouso (cena calma), aguardando (pacote em trânsito), sucesso (o núcleo brilha
  * em ciano uma vez) e erro (o núcleo pisca em vermelho e treme por cerca de 600 ms).
  */
-export function criarCena(canvas, { aoPerderContexto = () => {} } = {}) {
+export function criarCena(canvas, { painel = null, aoPerderContexto = () => {} } = {}) {
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
     renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -56,7 +56,7 @@ export function criarCena(canvas, { aoPerderContexto = () => {} } = {}) {
     const cena = new THREE.Scene();
     cena.fog = new THREE.FogExp2(FUNDO, 0.045);
     const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 100);
-    camera.position.set(0, 0, 11);
+    camera.position.set(0, 0, DISTANCIA_CAMERA);
 
     const mundo = new THREE.Group();
     cena.add(mundo);
@@ -105,8 +105,10 @@ export function criarCena(canvas, { aoPerderContexto = () => {} } = {}) {
     }
     const geometriaEstrelas = new THREE.BufferGeometry();
     geometriaEstrelas.setAttribute('position', new THREE.BufferAttribute(posicoes, 3));
-    const materialEstrelas = new THREE.PointsMaterial({ color: 0x7fd8e6, size: 0.05, transparent: true, opacity: 0.6 });
-    const estrelas = new THREE.Points(geometriaEstrelas, materialEstrelas);
+    const estrelas = new THREE.Points(
+        geometriaEstrelas,
+        new THREE.PointsMaterial({ color: 0x7fd8e6, size: 0.05, transparent: true, opacity: 0.6 }),
+    );
     cena.add(estrelas);
 
     // Curva entre cliente e servidor, e o cabo que a desenha.
@@ -152,9 +154,6 @@ export function criarCena(canvas, { aoPerderContexto = () => {} } = {}) {
     let quadro = 0;
     let anterior = 0;
     let relogio = 0;
-    let largura = 1;
-    let altura = 1;
-    let distancia = 11;
 
     // Pacote: progresso de 0 a 1 na curva; "chegando" acelera o fim assim que a resposta vem.
     const viagem = { ativa: false, chegando: false, p: 0 };
@@ -268,7 +267,7 @@ export function criarCena(canvas, { aoPerderContexto = () => {} } = {}) {
             onda.lookAt(camera.position);
         }
 
-        camera.position.z = distancia;
+        camera.position.z = DISTANCIA_CAMERA;
         camera.lookAt(0, 0, 0);
         renderer.render(cena, camera);
     }
@@ -284,24 +283,39 @@ export function criarCena(canvas, { aoPerderContexto = () => {} } = {}) {
         quadro = requestAnimationFrame(passo);
     }
 
+    /**
+     * Cobre a janela inteira, como na versão original. No computador o núcleo fica no centro
+     * da área livre à direita do painel; no celular a cena inteira cabe acima do painel.
+     */
     function redimensionar() {
-        const pai = canvas.parentElement;
-        largura = Math.max(1, pai ? pai.clientWidth : canvas.clientWidth);
-        altura = Math.max(1, pai ? pai.clientHeight : canvas.clientHeight);
+        const largura = Math.max(1, window.innerWidth);
+        const altura = Math.max(1, window.innerHeight);
         renderer.setSize(largura, altura, false);
         camera.aspect = largura / altura;
         camera.updateProjectionMatrix();
 
-        // Enquadra a cena inteira, qualquer que seja a proporção do quadro.
-        const tangente = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-        const paraLargura = LARGURA_UTIL / 2 / (tangente * camera.aspect);
-        const paraAltura = ALTURA_UTIL / 2 / tangente;
-        distancia = Math.max(DISTANCIA_MINIMA, paraLargura, paraAltura);
-        mundo.position.x = DESLOCAMENTO_X;
+        // Unidades do mundo por pixel no plano do núcleo.
+        const porPixel = (2 * DISTANCIA_CAMERA * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) / altura;
+        const caixa = painel ? painel.getBoundingClientRect() : null;
 
-        // O tamanho do ponto depende da altura do quadro; compensa para as estrelas
-        // continuarem visíveis num quadro menor que a tela inteira.
-        materialEstrelas.size = 0.05 * Math.min(2.5, Math.max(1, 800 / altura));
+        if (largura > LARGURA_CELULAR) {
+            const direita = caixa ? caixa.right : largura * 0.4;
+            const livre = Math.max(1, largura - direita);
+            const escala = THREE.MathUtils.clamp((0.92 * livre * porPixel) / (LARGURA_UTIL / 2), 0.55, 1.2);
+            const centroX = (direita + largura) / 2;
+            mundo.scale.setScalar(escala);
+            mundo.position.set((centroX - largura / 2) * porPixel - POSICAO_NUCLEO.x * escala, 0, 0);
+        } else {
+            const topoPainel = caixa ? caixa.top + window.scrollY : altura * 0.38;
+            const area = THREE.MathUtils.clamp(topoPainel, altura * 0.2, altura * 0.6);
+            const escala = Math.min(
+                (0.96 * largura * porPixel) / LARGURA_UTIL,
+                (0.9 * area * porPixel) / 6.8,
+                0.6,
+            );
+            mundo.scale.setScalar(escala);
+            mundo.position.set(-CENTRO_UTIL_X * escala, (altura / 2 - area / 2) * porPixel, 0);
+        }
 
         if (!movimento) {
             compor();
@@ -309,7 +323,10 @@ export function criarCena(canvas, { aoPerderContexto = () => {} } = {}) {
     }
 
     const observador = new ResizeObserver(redimensionar);
-    observador.observe(canvas.parentElement ?? canvas);
+    observador.observe(document.documentElement);
+    if (painel) {
+        observador.observe(painel);
+    }
 
     canvas.addEventListener('webglcontextlost', (evento) => {
         evento.preventDefault();

@@ -66,23 +66,52 @@ a {
     outline-offset: 3px;
 }
 
-/* Layout */
-.layout {
-    display: grid;
-    grid-template-columns: minmax(0, 520px) minmax(0, 1fr);
-    gap: clamp(24px, 4vw, 56px);
-    align-items: start;
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: clamp(16px, 4vw, 48px);
+/* Cena de fundo: cobre a tela inteira, atrás do conteúdo */
+.fundo {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
 }
 
+.fundo canvas {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* Layout */
+.layout {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 480px) minmax(0, 1fr);
+    gap: clamp(24px, 4vw, 56px);
+    align-items: center;
+    min-height: 100vh;
+    padding: clamp(16px, 4vw, 56px);
+}
+
+/* Fundo quase opaco: mesmo com o pior caso atrás (branco puro), o texto passa de 4,5:1. */
 .painel {
-    background: var(--painel);
+    background: rgba(12, 17, 28, 0.94);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
     border: 1px solid var(--linha);
     border-radius: 20px;
     padding: clamp(20px, 3vw, 32px);
     box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+}
+
+.topo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 16px;
 }
 
 .eyebrow {
@@ -251,43 +280,21 @@ h1 {
     line-height: 1.55;
 }
 
-/* Palco do visualizador */
-.palco {
-    position: sticky;
-    top: 24px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-}
-
-.palco-cena {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 22 / 15;
-}
-
-.palco-cena canvas,
-.palco-cena .cena-svg {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-}
-
-/* As estrelas da cena vão até a borda do quadro; a máscara suaviza o corte. */
-.palco-cena canvas {
-    -webkit-mask-image: radial-gradient(ellipse at center, #000 62%, transparent 100%);
-    mask-image: radial-gradient(ellipse at center, #000 62%, transparent 100%);
-}
-
-.palco[data-modo="animado"] .cena-svg,
-.palco[data-modo="estatico"] canvas {
+/* Cena de fundo: canvas (animado) ou SVG (estático) */
+.fundo[data-modo="animado"] .cena-svg,
+.fundo[data-modo="estatico"] canvas {
     display: none;
 }
 
 /* Quadro estático (movimento reduzido ou sem WebGL): núcleo wireframe com órbitas. */
 .cena-svg {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    width: min(64vw, 1000px);
+    height: auto;
+    aspect-ratio: 22 / 15;
+    transform: translateY(-50%);
     fill: none;
     stroke-width: 2.5;
     stroke-linecap: round;
@@ -321,7 +328,10 @@ h1 {
 }
 
 .svg-halo,
-.svg-pacote {
+.svg-pacote,
+.svg-pacote-erro,
+.svg-faiscas,
+.svg-cabo-partido {
     display: none;
 }
 
@@ -333,6 +343,20 @@ h1 {
 .svg-pacote {
     fill: var(--ambar);
     stroke: none;
+}
+
+.svg-pacote-erro {
+    fill: var(--perigo);
+    stroke: none;
+}
+
+.svg-faiscas,
+.svg-cabo-partido {
+    stroke: var(--perigo);
+}
+
+.svg-faiscas {
+    stroke-width: 3;
 }
 
 body[data-estado="aguardando"] .svg-cabo {
@@ -351,9 +375,18 @@ body[data-estado="erro"] .svg-nucleo {
     stroke-dasharray: 9 6;
 }
 
+body[data-estado="erro"] .svg-cabo {
+    display: none;
+}
+
+body[data-estado="erro"] .svg-cabo-partido,
+body[data-estado="erro"] .svg-pacote-erro,
+body[data-estado="erro"] .svg-faiscas {
+    display: inline;
+}
+
 .legenda {
-    max-width: 44ch;
-    text-align: center;
+    margin-top: 20px;
     color: var(--suave);
     font-size: 0.875rem;
 }
@@ -388,15 +421,18 @@ body[data-estado="erro"] .svg-nucleo {
 @media (max-width: 860px) {
     .layout {
         grid-template-columns: minmax(0, 1fr);
+        align-items: start;
+        padding-top: min(38vh, 300px);
     }
 
-    .palco {
-        position: static;
-        order: -1;
-    }
-
-    .palco-cena {
-        width: min(100%, 420px);
+    .cena-svg {
+        top: 0;
+        right: auto;
+        left: 0;
+        width: 100%;
+        height: min(38vh, 300px);
+        aspect-ratio: auto;
+        transform: none;
     }
 }
 
