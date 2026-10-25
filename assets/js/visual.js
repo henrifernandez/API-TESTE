@@ -39,6 +39,7 @@ export function criarVisual({ palco, canvas, botaoPausa, painel }) {
     let estado = 'repouso';
     let contextoAtual = {};
     let pausadoPeloUsuario = false;
+    let sacudida = null;
 
     function aplicarModo(modo) {
         palco.dataset.modo = modo;
@@ -50,10 +51,35 @@ export function criarVisual({ palco, canvas, botaoPausa, painel }) {
     }
 
     function sincronizarMovimento() {
-        cena?.definirMovimento(movimentoAtivo());
+        const ligado = movimentoAtivo();
+        cena?.definirMovimento(ligado);
+        if (!ligado) {
+            sacudida?.cancel();
+        }
+    }
+
+    /** Balanço curto do painel (até 6 px, 500 ms). Só transform: não move o foco nem reflui o texto. */
+    function sacudirPainel() {
+        if (!painel || !movimentoAtivo() || typeof painel.animate !== 'function') {
+            return;
+        }
+        sacudida?.cancel();
+        sacudida = painel.animate(
+            [
+                { transform: 'translate(0, 0)' },
+                { transform: 'translate(-5px, 1px)', offset: 0.12 },
+                { transform: 'translate(6px, -1px)', offset: 0.28 },
+                { transform: 'translate(-4px, 2px)', offset: 0.46 },
+                { transform: 'translate(3px, -1px)', offset: 0.64 },
+                { transform: 'translate(-2px, 0)', offset: 0.82 },
+                { transform: 'translate(0, 0)' },
+            ],
+            { duration: 500, easing: 'linear' },
+        );
     }
 
     function descartarCena() {
+        sacudida?.cancel();
         cena?.destruir();
         cena = null;
     }
@@ -75,6 +101,7 @@ export function criarVisual({ palco, canvas, botaoPausa, painel }) {
             }
             cena = criarCena(canvas, {
                 painel,
+                aoSacudir: sacudirPainel,
                 aoPerderContexto: () => {
                     geracao++;
                     descartarCena();
