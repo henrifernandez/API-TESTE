@@ -152,11 +152,11 @@ O `Router::handle()` recebe um `Request` e devolve um `Response`, sem tocar em s
 
 O console (`index.html`, `assets/css/app.css`, `assets/js/*.js`) chama as rotas com `fetch` e mostra método, URL, status HTTP, tempo em ms e o JSON formatado. O resultado é anunciado por uma única região `role="status"`, de uma vez só.
 
-O visualizador é um anel de partículas em Three.js 0.186.1, guardado localmente em `assets/vendor/three/` (licença MIT, veja `VERSION.txt`): âmbar girando enquanto aguarda, ciano com pulso leve em respostas 2xx e vermelho com tremor de cerca de 600 ms em 4xx e 5xx.
+O visualizador é uma cena em Three.js 0.186.1, guardada localmente em `assets/vendor/three/` (licença MIT, veja `VERSION.txt`). O servidor é um núcleo em wireframe ciano com duas órbitas, o cliente é um octaedro âmbar, e há um campo de estrelas ao fundo. Uma curva liga os dois: enquanto a requisição está em trânsito, um pacote âmbar viaja por ela. Quando a resposta chega, o pacote entra no núcleo, que brilha em ciano em respostas 2xx ou pisca em vermelho com um tremor de cerca de 600 ms em 4xx, 5xx e falhas de rede, e depois volta ao repouso. A câmera acompanha o mouse com um parallax suave (desligado em movimento reduzido e com a animação pausada). A cena fica em `assets/js/cena.js`, e `assets/js/visual.js` decide entre ela e o quadro estático.
 
 Cuidados de acessibilidade (meta: WCAG 2.2 AA):
 
-- Com `prefers-reduced-motion: reduce` ou sem WebGL, o console mostra um SVG estático equivalente (cor e forma mudam, nada se move) e o Three.js nem é baixado.
+- Com `prefers-reduced-motion: reduce` ou sem WebGL, o console mostra um SVG estático do núcleo wireframe com órbitas (cor e forma mudam, nada se move) e o Three.js nem é baixado.
 - O botão "Pausar animação" / "Retomar animação" é operável por teclado, e a animação também pausa quando a aba fica oculta.
 - Os botões ficam desabilitados com `aria-busy` durante a requisição, e o foco volta ao botão usado.
 - O `<canvas>` é `aria-hidden`, a página tem `lang="pt-BR"`, um único `h1`, landmark `main`, foco visível e alvos de pelo menos 24 px.
